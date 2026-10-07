@@ -1,0 +1,18 @@
+# Build artifacts
+*.o
+*.elf
+*.iso
+*.hdd
+*.img
+bin/
+iso_root/
+
+# Limine binary (download it yourself)
+limine/
+
+# Editor / OS files
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
