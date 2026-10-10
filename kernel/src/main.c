@@ -6,6 +6,7 @@
 #include "pmm.h"
 #include "idt.h"
 #include "keyboard.h"
+#include "shell.h"
 
 __attribute__((used, section(".limine_requests")))
 static volatile LIMINE_BASE_REVISION(3);
@@ -46,31 +47,28 @@ void kmain(void) {
 
     struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
 
+    // === Boot sequence ===
     console_init(fb);
     console_clear(0x0A0A1A);
 
     console_set_color(0x00FFCC);
     console_print("========================================\n");
-    console_print("          New-OS Kernel v0.3\n");
+    console_print("          New-OS Kernel v0.4\n");
     console_print("========================================\n\n");
 
-    // Memory Manager
+    // Memory
     console_set_color(0xFFCC55);
     console_print("[..] Initializing PMM...\n");
     pmm_init(memmap_request.response, hhdm_request.response->offset);
     console_set_color(0x55FF55);
-    console_print("[OK] Physical Memory Manager ready\n");
-    console_set_color(0xCCCCCC);
-    console_print("     Free memory: ");
-    console_print_dec(pmm_get_free_memory() / 1024 / 1024);
-    console_print(" MiB\n\n");
+    console_print("[OK] Physical Memory Manager\n");
 
     // Interrupts
     console_set_color(0xFFCC55);
-    console_print("[..] Setting up IDT and PIC...\n");
+    console_print("[..] Setting up IDT + PIC...\n");
     idt_init();
     console_set_color(0x55FF55);
-    console_print("[OK] Interrupts ready\n\n");
+    console_print("[OK] Interrupts ready\n");
 
     // Keyboard
     console_set_color(0xFFCC55);
@@ -83,26 +81,11 @@ void kmain(void) {
     enable_interrupts();
 
     console_set_color(0x00FFAA);
-    console_print("System ready! Type something:\n\n");
-    console_set_color(0xFFFFFF);
-    console_print("> ");
+    console_print("All systems ready.\n\n");
 
-    // Simple echo loop
-    for (;;) {
-        if (keyboard_has_char()) {
-            char c = keyboard_getchar();
+    // Start the interactive shell
+    shell_run();
 
-            if (c == '\n') {
-                console_print("\n> ");
-            } else if (c == '\b') {
-                // Simple backspace handling could be added later
-                console_print("^");
-            } else {
-                char buf[2] = {c, 0};
-                console_print(buf);
-            }
-        } else {
-            asm volatile ("hlt");
-        }
-    }
+    // Should never reach here
+    hcf();
 }
